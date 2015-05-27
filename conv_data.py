@@ -15,10 +15,10 @@ def create_maps(nc_var, nnumber, npoint, lats, longs):
         numpy array with latitudes, numpy array with longitudes
     Output: 2D numpy array of ints., 3x2D arrays of floats
     """
-    front_map = np.zeros((len(lats), len(longs)), dtype=np.int)
-    t_map = np.zeros((len(lats), len(longs)), dtype=np.float)
-    u_map = np.zeros_like(t_map)
-    v_map = np.zeros_like(t_map)
+    front_map = np.ones((len(lats), len(longs)), dtype=np.int) * -9999
+    t_map = np.ones((len(lats), len(longs)), dtype=np.float) * -9999.0
+    u_map = t_map[:, :]
+    v_map = t_map[:, :]
     for n in xrange(nnumber):
         for p in xrange(npoint):
             lat, lon, speed_t, speed_u, speed_v = nc_var[n, p, :]
@@ -63,18 +63,24 @@ setattr(longsvar, 'long_name', 'Longitude')
 setattr(longsvar, 'units', 'degree_east')
 
 cf_var = outfile.createVariable(
-    'cold_fronts', np.int, ('time', 'latitude', 'longitude'))
+    'cold_fronts', np.int16, ('time', 'latitude', 'longitude'),
+    fill_value = -9999)
 wf_var = outfile.createVariable(
-    'warm_fronts', np.int, ('time', 'latitude', 'longitude'))
+    'warm_fronts', np.int16, ('time', 'latitude', 'longitude'),
+    fill_value = -9999)
 sf_var = outfile.createVariable(
-    'stat_fronts', np.int, ('time', 'latitude', 'longitude'))
+    'stat_fronts', np.int16, ('time', 'latitude', 'longitude'),
+    fill_value = -9999)
 
 t_var = outfile.createVariable(
-    'thetaw_gradient', np.float, ('time', 'latitude', 'longitude'))
+    'thetaw_gradient', np.float32, ('time', 'latitude', 'longitude'),
+    fill_value = -9999.0)
 u_var = outfile.createVariable(
-    'u_speed', np.float, ('time', 'latitude', 'longitude'))
+    'u_speed', np.float32, ('time', 'latitude', 'longitude'),
+    fill_value = -9999.0)
 v_var = outfile.createVariable(
-    'v_speed', np.float, ('time', 'latitude', 'longitude'))
+    'v_speed', np.float32, ('time', 'latitude', 'longitude'),
+    fill_value = -9999.0)
 
 latsvar[:] = lats
 longsvar[:] = longs
@@ -100,15 +106,19 @@ for t in xrange(ntime):
     wf_var[t, :, :] = wf_map[:, :]
     sf_var[t, :, :] = sf_map[:, :]
 
-    t_map = np.where(t_map_wf != 0.0, t_map_wf,
+    t_map = np.where(t_map_wf > -9998.0, t_map_wf,
                               np.where(t_map_cf != 0.0, t_map_cf,
                                        t_map_sf))
-    u_map = np.where(u_map_wf != 0.0, u_map_wf,
+    u_map = np.where(u_map_wf > -9998.0, u_map_wf,
                               np.where(u_map_cf != 0.0, u_map_cf,
                                        u_map_sf))
-    v_map = np.where(v_map_wf != 0.0, v_map_wf,
+    v_map = np.where(v_map_wf > -9998.0, v_map_wf,
                               np.where(v_map_cf != 0.0, v_map_cf,
                                        v_map_sf))
+    t_var[t, :, :] = t_map[:, :]
+    u_var[t, :, :] = u_map[:, :]
+    v_var[t, :, :] = v_map[:, :]
+    
     print "{}/{}".format(t, ntime)
     
 
