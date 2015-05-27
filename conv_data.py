@@ -36,32 +36,39 @@ def create_maps(nc_var, nnumber, npoint, lats, longs):
     return (front_map, t_map, u_map, v_map)
 
 
-
+# input data file
 infile = nc.Dataset(infile_name, 'r')
 ntime = len(infile.dimensions['time'])
 nnumber = len(infile.dimensions['number'])
 npoint = len(infile.dimensions['point'])
 ndata = len(infile.dimensions['data'])
 
+# output data file
 outfile = nc.Dataset(outfile_name, 'w')
-outfile.createDimension('time', size=None)
-outfile.createDimension('latitude', size=len(lats))
-outfile.createDimension('longitude', size=len(longs))
 
+# Create dimensions:
+# Time, unlimited
+outfile.createDimension('time', size=None)
 timevar = outfile.createVariable(
     'time', infile.variables['time'].datatype, ('time',))
-latsvar = outfile.createVariable(
-    'latitude', np.float, ('latitude',))
-longsvar = outfile.createVariable(
-    'longitude', np.float, ('longitude',))
-
 timevar.units = infile.variables['time'].units
 
-setattr(latsvar, 'long_name', 'Latitude')
-setattr(latsvar, 'units', 'degree_north')
-setattr(longsvar, 'long_name', 'Longitude')
-setattr(longsvar, 'units', 'degree_east')
+# Latitude
+outfile.createDimension('latitude', size=len(lats))
+latsvar = outfile.createVariable(
+    'latitude', np.float32, ('latitude',))
+latsvar.long_name = 'Latitude'
+latsvar.units = 'degree_north'
 
+# Longitude
+outfile.createDimension('longitude', size=len(longs))
+longsvar = outfile.createVariable(
+    'longitude', np.float32, ('longitude',))
+longsvar.long_name = 'Longitude'
+longsvar.units = 'degree_east'
+
+# Create Variables
+# Cold / Warm / Stationary Fronts
 cf_var = outfile.createVariable(
     'cold_fronts', np.int16, ('time', 'latitude', 'longitude'),
     fill_value = -9999)
@@ -72,9 +79,12 @@ sf_var = outfile.createVariable(
     'stat_fronts', np.int16, ('time', 'latitude', 'longitude'),
     fill_value = -9999)
 
+# Theta Gradient
 t_var = outfile.createVariable(
     'thetaw_gradient', np.float32, ('time', 'latitude', 'longitude'),
     fill_value = -9999.0)
+
+# Speed U and V
 u_var = outfile.createVariable(
     'u_speed', np.float32, ('time', 'latitude', 'longitude'),
     fill_value = -9999.0)
@@ -82,14 +92,14 @@ v_var = outfile.createVariable(
     'v_speed', np.float32, ('time', 'latitude', 'longitude'),
     fill_value = -9999.0)
 
+# Initialise the dimensions
+timevar[:] = infile.variables['time'][:]
 latsvar[:] = lats
 longsvar[:] = longs
 
 cf_data = np.zeros((nnumber, npoint, 5), dtype=np.float)
 wf_data = np.zeros_like(cf_data)
 sf_data = np.zeros_like(cf_data)
-
-timevar[:] = infile.variables['time'][:]
 
 for t in xrange(ntime):
     cf_data[:, :, :] = infile.variables['cold_fronts'][t, :, :, :]
