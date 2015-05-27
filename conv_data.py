@@ -2,6 +2,7 @@
 
 import netCDF4 as nc
 import numpy as np
+import argparse
 
 lats = np.arange(-90.0, 90.0, 0.75)
 longs = np.arange(0.0, 359.25, 0.75)
@@ -36,15 +37,31 @@ def create_maps(nc_var, nnumber, npoint, lats, longs):
     return (front_map, t_map, u_map, v_map)
 
 
+def ap():
+    parser = argparse.ArgumentParser(description='converting fronts')
+    parser.add_argument('-i', '--input', metavar='FILE', type=str,
+                        help='input file', required=True)
+    parser.add_argument('-o', '--output', metavar='FILE', type=str,
+                        help='output file', required=True)
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        default=False, help='print progress')
+    parser.add_argument('-c', '--compress', action='store_true',
+                        default=False, help='Compress output file')
+    args = parser.parse_args()
+    return args
+                        
+
+args = ap()
+
 # input data file
-infile = nc.Dataset(infile_name, 'r')
+infile = nc.Dataset(args.input, 'r')
 ntime = len(infile.dimensions['time'])
 nnumber = len(infile.dimensions['number'])
 npoint = len(infile.dimensions['point'])
 ndata = len(infile.dimensions['data'])
 
 # output data file
-outfile = nc.Dataset(outfile_name, 'w')
+outfile = nc.Dataset(args.output, 'w')
 
 # Create dimensions:
 # Time, unlimited
@@ -71,26 +88,26 @@ longsvar.units = 'degree_east'
 # Cold / Warm / Stationary Fronts
 cf_var = outfile.createVariable(
     'cold_fronts', np.int16, ('time', 'latitude', 'longitude'),
-    fill_value = -9999)
+    fill_value = -9999, zlib=args.compress)
 wf_var = outfile.createVariable(
     'warm_fronts', np.int16, ('time', 'latitude', 'longitude'),
-    fill_value = -9999)
+    fill_value = -9999, zlib=args.compress)
 sf_var = outfile.createVariable(
     'stat_fronts', np.int16, ('time', 'latitude', 'longitude'),
-    fill_value = -9999)
+    fill_value = -9999, zlib=args.compress)
 
 # Theta Gradient
 t_var = outfile.createVariable(
     'thetaw_gradient', np.float32, ('time', 'latitude', 'longitude'),
-    fill_value = -9999.0)
+    fill_value = -9999.0, zlib=args.compress)
 
 # Speed U and V
 u_var = outfile.createVariable(
     'u_speed', np.float32, ('time', 'latitude', 'longitude'),
-    fill_value = -9999.0)
+    fill_value = -9999.0, zlib=args.compress)
 v_var = outfile.createVariable(
     'v_speed', np.float32, ('time', 'latitude', 'longitude'),
-    fill_value = -9999.0)
+    fill_value = -9999.0, zlib=args.compress)
 
 # Initialise the dimensions
 timevar[:] = infile.variables['time'][:]
@@ -129,7 +146,8 @@ for t in xrange(ntime):
     u_var[t, :, :] = u_map[:, :]
     v_var[t, :, :] = v_map[:, :]
     
-    print "{}/{}".format(t, ntime)
+    if args.verbose:
+        print "{}/{}".format(t+1, ntime)
     
 
 outfile.close()
