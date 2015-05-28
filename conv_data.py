@@ -27,7 +27,7 @@ def create_maps(nc_var, nnumber, npoint, lats, longs):
             lonidx = np.argmin(abs(longs - lon))
             if ((lon > longs[-1]) and (360.0+longs[0] - lon < lon - longs[-1])):
                 lonidx = 0
-            front_map[latidx, lonidx] = n
+            front_map[latidx, lonidx] = n + 1
             t_map[latidx, lonidx] = speed_t
             u_map[latidx, lonidx] = speed_u
             v_map[latidx, lonidx] = speed_v
