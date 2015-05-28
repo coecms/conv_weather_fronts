@@ -14,10 +14,10 @@ def create_maps(nc_var, nnumber, npoint, lats, longs):
         numpy array with latitudes, numpy array with longitudes
     Output: 2D numpy array of ints., 3x2D arrays of floats
     """
-    front_map = np.ones((len(lats), len(longs)), dtype=np.int) * -9999
-    t_map = np.ones((len(lats), len(longs)), dtype=np.float) * -9999.0
-    u_map = t_map[:, :]
-    v_map = t_map[:, :]
+    front_map = np.full((len(lats), len(longs)), -9999, dtype=np.int)
+    t_map = np.full((len(lats), len(longs)), -9999.0, dtype=np.float)
+    u_map = t_map.copy()
+    v_map = t_map.copy()
     for n in xrange(nnumber):
         for p in xrange(npoint):
             lat, lon, speed_t, speed_u, speed_v = nc_var[n, p, :]
@@ -65,7 +65,7 @@ def main():
     # Time, unlimited
     outfile.createDimension('time', size=None)
     timevar = outfile.createVariable(
-        'time', infile.variables['time'].datatype, ('time',))
+        'time', np.float32, ('time',))
     timevar.units = infile.variables['time'].units
 
     # Latitude
@@ -112,9 +112,9 @@ def main():
     latsvar[:] = lats
     longsvar[:] = longs
 
-    cf_data = np.zeros((nnumber, npoint, 5), dtype=np.float)
-    wf_data = np.zeros_like(cf_data)
-    sf_data = np.zeros_like(cf_data)
+    cf_data = np.full((nnumber, npoint, 5), -9999.0, dtype=np.float)
+    wf_data = cf_data.copy()
+    sf_data = cf_data.copy()
 
     for t in xrange(ntime):
         cf_data[:, :, :] = infile.variables['cold_fronts'][t, :, :, :]
