@@ -4,8 +4,8 @@ import netCDF4 as nc
 import numpy as np
 import argparse
 
-lats = np.arange(-90.0, 90.0, 0.75)
-longs = np.arange(0.0, 359.25, 0.75)
+lats = np.linspace(-90.0, 90.0, 241, endpoint=True)
+longs = np.linspace(0.0, 360.0, 480, endpoint=False)
 
 
 def create_maps(nc_var, nnumber, npoint, lats, longs):
